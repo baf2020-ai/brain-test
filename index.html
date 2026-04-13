@@ -86,7 +86,7 @@ function Ch1({ onBack }) {
         <FadeIn>
           <p style={S.body}>뭐가 보였나요? 하나씩 적어보세요.</p>
           <div style={S.inputRow}>
-            <input style={S.input} placeholder="예: 책상, 의자, 창문..." value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }} />
+            <input style={S.input} placeholder="예: 책상, 의자, 창문..." value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); addItem(); } }} />
             <button style={S.addBtn} onClick={addItem}>+</button>
           </div>
           <div style={S.chipWrap}>{items.map((it, i) => <span key={i} style={S.chip}>{it}</span>)}</div>
