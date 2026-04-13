@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>뇌는 어떻게 나를 조종하는가</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; background: #08080c; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+/* ─── Color Constants ─── */
+const STROOP_COLORS = [
+  { name: "빨강", hex: "#ff4757" },
+  { name: "파랑", hex: "#3742fa" },
+  { name: "초록", hex: "#2ed573" },
+  { name: "노랑", hex: "#ffa502" },
+  { name: "보라", hex: "#a55eea" },
+];
+
+/* ─── Utility ─── */
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+/* ─── Chapter Data ─── */
+const CHAPTERS = [
+  { num: 1, title: "해석기를 만나다", icon: "\u{1F441}", color: "#ff6b6b", desc: "주변 둘러보기" },
+  { num: 2, title: "언어와 범주화", icon: "\u{1F524}", color: "#ffa502", desc: "스트룹 효과 & Yes/No" },
+  { num: 3, title: "패턴과 자아", icon: "\u{1F50D}", color: "#ff6348", desc: "패턴 인식 실험" },
+  { num: 4, title: "우뇌 의식", icon: "\u{1F9D8}", color: "#2ed573", desc: "현재 순간 체험" },
+  { num: 5, title: "의미와 이해", icon: "\u{1F4A1}", color: "#1e90ff", desc: "의미 부여 실험" },
+  { num: 6, title: "직관과 감정", icon: "\u{2764}\u{FE0F}", color: "#e84393", desc: "감정 관찰 & 감사" },
+  { num: 7, title: "의식이란?", icon: "\u{1F30C}", color: "#a55eea", desc: "의식 명상 체험" },
+  { num: 8, title: "진짜 나 찾기", icon: "\u{1FA9E}", color: "#fd9644", desc: "나는 누구인가" },
+];
+
+/* ══════════════════════════════════════
+   CHAPTER 1: Look Around
+   ══════════════════════════════════════ */
+function Ch1({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [countdown, setCountdown] = useState(10);
+  const [items, setItems] = useState([]);
+  const [inputVal, setInputVal] = useState("");
+
+  useEffect(() => {
+    if (step === 1) {
+      setCountdown(10);
+      const t = setInterval(() => setCountdown((c) => { if (c <= 1) { clearInterval(t); setStep(2); return 0; } return c - 1; }), 1000);
+      return () => clearInterval(t);
+    }
+  }, [step]);
+
+  const addItem = useCallback(() => {
+    const val = inputVal.trim();
+    if (!val) return;
+    setItems((prev) => [...prev, val]);
+    setInputVal("");
+  }, [inputVal]);
+
+  const hasNothing = items.some((i) => /빈\s*공간|아무것|없|nothing|empty|공백/i.test(i));
+
+  return (
+    <Screen title="탐구 1: 주변 둘러보기" ch={0} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>10초 동안 주위를 둘러보세요.<br />보이는 것들을 기억해 주세요.</p>
+          <p style={{ ...S.body, color: "#999", fontSize: "0.85rem" }}>이 실험은 좌뇌가 세상을 어떻게 인식하는지 보여줍니다.</p>
+          <Btn onClick={() => setStep(1)}>시작하기</Btn>
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <div style={S.timerCircle}><span style={S.timerNum}>{countdown}</span></div>
+          <p style={{ ...S.body, marginTop: 24, fontSize: "1.2rem", fontWeight: 700 }}>지금 주위를 둘러보세요!</p>
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <p style={S.body}>뭐가 보였나요? 하나씩 적어보세요.</p>
+          <div style={S.inputRow}>
+            <input style={S.input} placeholder="예: 책상, 의자, 창문..." value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }} />
+            <button style={S.addBtn} onClick={addItem}>+</button>
+          </div>
+          <div style={S.chipWrap}>{items.map((it, i) => <span key={i} style={S.chip}>{it}</span>)}</div>
+          {items.length >= 3 && <Btn onClick={() => setStep(3)}>결과 보기</Btn>}
+        </FadeIn>
+      )}
+      {step === 3 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p>여러분의 목록: <strong style={{ color: "#ffa502" }}>{items.join(", ")}</strong></p>
+            {hasNothing ? (
+              <p style={{ color: "#2ed573" }}>오! <strong>"빈 공간"</strong>을 적으셨네요! 대부분의 사람들은 이걸 놓칩니다.</p>
+            ) : (
+              <p>혹시 <strong style={{ color: "#ff6b6b" }}>"빈 공간"</strong>이나 <strong style={{ color: "#ff6b6b" }}>"아무것도 없는 곳"</strong>을 적으셨나요?</p>
+            )}
+            <p>실제로 우리 주변의 대부분은 <strong>빈 공간</strong>입니다. 하지만 좌뇌는 사물에 이름 붙이고 분류하는 데만 집중하기 때문에, <strong>비어있는 것은 완전히 무시</strong>합니다.</p>
+            <p style={{ color: "#aaa", fontSize: "0.85rem", marginTop: 12 }}>이것이 바로 좌뇌 해석기의 첫 번째 특징입니다.</p>
+          </div>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 2: Stroop + Yes/No
+   ══════════════════════════════════════ */
+function Ch2({ onBack }) {
+  const [sub, setSub] = useState("menu");
+  const [round, setRound] = useState(0);
+  const [score, setScore] = useState(0);
+  const [current, setCurrent] = useState(null);
+  const [choices, setChoices] = useState([]);
+  const [fb, setFb] = useState(null);
+  const [startTime, setStartTime] = useState(0);
+  const [times, setTimes] = useState([]);
+  const TOTAL = 10;
+
+  const [ynStep, setYnStep] = useState(0);
+  const [ynWord, setYnWord] = useState("");
+  const [ynTarget, setYnTarget] = useState("");
+  const [ynRound, setYnRound] = useState(0);
+  const [ynScore, setYnScore] = useState(0);
+  const [ynFb, setYnFb] = useState(null);
+
+  const newStroop = useCallback(() => {
+    const word = pick(STROOP_COLORS);
+    let color;
+    do { color = pick(STROOP_COLORS); } while (color.name === word.name);
+    const ch = shuffle([color, ...shuffle(STROOP_COLORS.filter((c) => c.name !== color.name)).slice(0, 3)]);
+    setCurrent({ word: word.name, colorHex: color.hex, correctName: color.name });
+    setChoices(ch);
+    setFb(null);
+    setStartTime(Date.now());
+  }, []);
+
+  const startStroop = () => { setSub("stroop"); setRound(1); setScore(0); setTimes([]); newStroop(); };
+
+  useEffect(() => { if (sub === "stroop" && round > 1) newStroop(); }, [round, sub]);
+
+  const answerStroop = (c) => {
+    if (fb) return;
+    const elapsed = Date.now() - startTime;
+    const ok = c.name === current.correctName;
+    if (ok) { setScore((s) => s + 1); setTimes((t) => [...t, elapsed]); }
+    setFb(ok ? "o" : "x");
+    setTimeout(() => { if (round >= TOTAL) setSub("stroop_result"); else setRound((r) => r + 1); }, 500);
+  };
+
+  const startYesNo = () => { setSub("yesno"); setYnStep(0); setYnRound(0); setYnScore(0); nextYn(); };
+
+  const nextYn = () => {
+    const pairs = [
+      { word: "예", target: "아니오" }, { word: "아니오", target: "예" },
+      { word: "좋다", target: "나쁘다" }, { word: "나쁘다", target: "좋다" },
+      { word: "맞다", target: "틀리다" }, { word: "틀리다", target: "맞다" },
+      { word: "행복", target: "슬픔" }, { word: "슬픔", target: "행복" },
+      { word: "밝다", target: "어둡다" }, { word: "크다", target: "작다" },
+    ];
+    const p = pick(pairs);
+    setYnWord(p.word);
+    setYnTarget(p.target);
+    setYnFb(null);
+    setYnRound((r) => r + 1);
+  };
+
+  const answerYn = (ans) => {
+    if (ynFb) return;
+    const ok = ans === ynTarget;
+    if (ok) setYnScore((s) => s + 1);
+    setYnFb(ok ? "o" : "x");
+    setTimeout(() => { if (ynRound >= 10) setSub("yesno_result"); else nextYn(); }, 500);
+  };
+
+  if (sub === "menu") return (
+    <Screen title="탐구 2: 언어와 범주화" ch={1} onBack={onBack}>
+      <FadeIn>
+        <p style={S.body}>좌뇌가 언어를 얼마나 문자 그대로 받아들이는지 체험해 봅시다.</p>
+        <Btn onClick={startStroop}>스트룹 효과 테스트</Btn>
+        <div style={{ height: 12 }} />
+        <Btn onClick={startYesNo} variant="secondary">반대말 말하기 테스트</Btn>
+        <p style={{ ...S.body, fontSize: "0.8rem", color: "#777", marginTop: 20 }}>스트룹: 글자의 <strong>색깔</strong>을 고르세요 (뜻이 아닙니다!)<br />반대말: 화면에 나온 단어의 <strong>반대말</strong>을 고르세요</p>
+      </FadeIn>
+    </Screen>
+  );
+
+  if (sub === "stroop") return (
+    <Screen title="스트룹 효과" ch={1} onBack={() => setSub("menu")} progress={round / TOTAL}>
+      <p style={S.instruction}>글자의 <strong>색깔</strong>을 고르세요! (뜻 아님!)</p>
+      {current && (
+        <div style={{ ...S.displayBox, border: fb === "o" ? "2px solid #2ed573" : fb === "x" ? "2px solid #ff4757" : "2px solid #222" }}>
+          <span style={{ fontSize: "3.5rem", fontWeight: 900, color: current.colorHex }}>{current.word}</span>
+        </div>
+      )}
+      <div style={S.grid2}>{choices.map((c, i) => (
+        <button key={i} style={{ ...S.colorBtn, background: c.hex }} onClick={() => answerStroop(c)}>{c.name}</button>
+      ))}</div>
+    </Screen>
+  );
+
+  if (sub === "stroop_result") {
+    const avg = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+    return (
+      <Screen title="스트룹 결과" ch={1} onBack={() => setSub("menu")}>
+        <FadeIn>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: "3rem" }}>{score >= 8 ? "\u{1F389}" : "\u{1F9E0}"}</div>
+            <div style={{ fontSize: "2.5rem", fontWeight: 900, color: "#ffa502" }}>{score}<span style={{ fontSize: "1rem" }}>/{TOTAL}</span></div>
+            <div style={{ color: "#888" }}>평균 {avg}ms</div>
+          </div>
+          <div style={S.insightBox}>
+            <p><strong>이것이 스트룹 효과!</strong></p>
+            <p>좌뇌는 글자의 '뜻'을 자동으로 읽으려 해서, 실제 '색깔'을 판단하는 데 방해가 됩니다. 좌뇌가 언어를 현실 자체로 착각하기 때문이에요.</p>
+          </div>
+          <Btn onClick={startStroop}>다시 하기</Btn>
+        </FadeIn>
+      </Screen>
+    );
+  }
+
+  if (sub === "yesno") return (
+    <Screen title="반대말 말하기" ch={1} onBack={() => setSub("menu")} progress={ynRound / 10}>
+      <p style={S.instruction}>아래 단어의 <strong>반대말</strong>을 고르세요!</p>
+      <div style={{ ...S.displayBox, border: ynFb === "o" ? "2px solid #2ed573" : ynFb === "x" ? "2px solid #ff4757" : "2px solid #222" }}>
+        <span style={{ fontSize: "3rem", fontWeight: 900, color: "#ffa502" }}>{ynWord}</span>
+      </div>
+      <div style={S.grid2}>
+        {shuffle([ynTarget, ynWord]).map((w, i) => (
+          <button key={i} style={{ ...S.choiceBtn, background: i === 0 ? "#1e90ff" : "#a55eea" }} onClick={() => answerYn(w)}>{w}</button>
+        ))}
+      </div>
+    </Screen>
+  );
+
+  if (sub === "yesno_result") return (
+    <Screen title="반대말 결과" ch={1} onBack={() => setSub("menu")}>
+      <FadeIn>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: "2.5rem", fontWeight: 900, color: "#ffa502" }}>{ynScore}<span style={{ fontSize: "1rem" }}>/10</span></div>
+        </div>
+        <div style={S.insightBox}>
+          <p><strong>"예"라는 글자를 보면서 "아니오"라고 말하기가 어려웠나요?</strong></p>
+          <p>좌뇌는 단어를 보면 자동으로 그 의미에 반응합니다. 단어와 반대되는 답을 고르려면 좌뇌의 자동 반응을 억제해야 하기 때문에 시간이 더 걸리고 실수도 늘어납니다.</p>
+          <p>이것이 좌뇌가 <strong>언어를 현실 자체로 착각</strong>한다는 증거입니다.</p>
+        </div>
+        <Btn onClick={startYesNo}>다시 하기</Btn>
+      </FadeIn>
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 3: Pattern Perception
+   ══════════════════════════════════════ */
+function Ch3({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [dots, setDots] = useState([]);
+  const [userAnswer, setUserAnswer] = useState(null);
+
+  useEffect(() => {
+    setDots(Array.from({ length: 30 }, () => ({ x: Math.random() * 280 + 10, y: Math.random() * 280 + 10 })));
+  }, []);
+
+  return (
+    <Screen title="탐구 3: 패턴과 사라진 자아" ch={2} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>좌뇌는 패턴이 없는 곳에서도 패턴을 찾으려 합니다. 아래 실험으로 직접 체험해 보세요.</p>
+          <Btn onClick={() => setStep(1)}>시작하기</Btn>
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <p style={S.body}>아래 점들에서 어떤 <strong>패턴이나 형태</strong>가 보이나요?</p>
+          <svg viewBox="0 0 300 300" style={{ width: "100%", maxWidth: 300, margin: "0 auto", display: "block", background: "#111", borderRadius: 16 }}>
+            {dots.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r={4} fill="#ffa502" opacity={0.8} />)}
+          </svg>
+          <div style={{ ...S.grid2, marginTop: 20 }}>
+            <button style={{ ...S.choiceBtn, background: "#2ed573" }} onClick={() => { setUserAnswer("yes"); setStep(2); }}>패턴이 보인다</button>
+            <button style={{ ...S.choiceBtn, background: "#1e90ff" }} onClick={() => { setUserAnswer("no"); setStep(2); }}>그냥 무작위다</button>
+          </div>
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            {userAnswer === "yes" ? (
+              <>
+                <p><strong>패턴이 보였군요!</strong></p>
+                <p>사실 이 점들은 <strong>완전히 무작위</strong>로 배치된 것입니다. 하지만 좌뇌는 무작위 데이터에서도 의미 있는 패턴을 찾으려 합니다.</p>
+              </>
+            ) : (
+              <>
+                <p><strong>무작위라고 판단하셨네요!</strong></p>
+                <p>맞습니다. 이 점들은 완전히 무작위입니다. 하지만 많은 사람들은 여기서 별자리, 얼굴, 도형 같은 패턴을 "발견"합니다.</p>
+              </>
+            )}
+            <p>좌뇌는 이렇게 패턴을 찾아 이야기를 만들어냅니다. <strong>'나'라는 자아</strong>도 마찬가지예요. 좌뇌가 우리의 여러 행동과 기억에서 패턴을 찾아 <strong>"나는 이런 사람이야"</strong>라는 캐릭터를 만들어낸 것입니다.</p>
+            <p style={{ color: "#aaa", fontSize: "0.85rem" }}>저자는 이 자아가 사막의 신기루처럼 — 생각으로서 존재하지, 실체로서 존재하는 것은 아니라고 말합니다.</p>
+          </div>
+          <Btn onClick={() => { setStep(1); setDots(Array.from({ length: 30 }, () => ({ x: Math.random() * 280 + 10, y: Math.random() * 280 + 10 }))); }}>새로운 점으로 다시 해보기</Btn>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 4: Right-Brain Present Moment
+   ══════════════════════════════════════ */
+function Ch4({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [seconds, setSeconds] = useState(60);
+  const [breathPhase, setBreathPhase] = useState("in");
+  const timerRef = useRef(null);
+  const breathRef = useRef(null);
+
+  const startMeditation = () => {
+    setStep(1);
+    setSeconds(60);
+    timerRef.current = setInterval(() => setSeconds((s) => { if (s <= 1) { clearInterval(timerRef.current); clearInterval(breathRef.current); setStep(2); return 0; } return s - 1; }), 1000);
+    breathRef.current = setInterval(() => setBreathPhase((p) => p === "in" ? "out" : "in"), 4000);
+  };
+
+  useEffect(() => () => { clearInterval(timerRef.current); clearInterval(breathRef.current); }, []);
+
+  return (
+    <Screen title="탐구 4: 우뇌 의식 체험" ch={3} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>1분간 호흡에 집중하며 <strong>'지금 이 순간'</strong>을 체험해 봅시다.</p>
+          <p style={{ ...S.body, color: "#999", fontSize: "0.85rem" }}>생각이 떠오르면 판단하지 말고, "아, 생각이 떠오르는구나" 하고 다시 호흡으로 돌아오세요. 이것이 우뇌 의식을 깨우는 방법입니다.</p>
+          <Btn onClick={startMeditation}>시작하기 (1분)</Btn>
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ ...S.breathCircle, transform: breathPhase === "in" ? "scale(1.3)" : "scale(0.8)", background: breathPhase === "in" ? "rgba(46,213,115,0.15)" : "rgba(30,144,255,0.15)", borderColor: breathPhase === "in" ? "#2ed573" : "#1e90ff" }}>
+              <span style={{ fontSize: "1.3rem", fontWeight: 700, color: breathPhase === "in" ? "#2ed573" : "#1e90ff" }}>{breathPhase === "in" ? "들숨" : "날숨"}</span>
+            </div>
+            <p style={{ color: "#666", marginTop: 24, fontSize: "0.9rem" }}>남은 시간: {seconds}초</p>
+            <p style={{ color: "#444", fontSize: "0.8rem" }}>생각이 떠오르면 지켜만 보세요</p>
+          </div>
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p><strong>어떠셨나요?</strong></p>
+            <p>1분 동안 아무 생각 없이 있는 게 쉬웠나요? 아마 온갖 생각이 끊임없이 떠올랐을 거예요.</p>
+            <p>그 <strong>끊임없는 수다가 바로 좌뇌 해석기</strong>의 작동입니다. 해석기는 멈출 수 없지만, <strong>"아, 좌뇌가 또 이야기를 지어내는구나"</strong>라고 알아차리는 순간 — 그때 우뇌 의식이 깨어납니다.</p>
+            <p>불교에서 말하는 <strong>'지금 여기'</strong>에 머무르는 것이 바로 이것입니다.</p>
+          </div>
+          <Btn onClick={() => { setStep(0); }}>다시 해보기</Btn>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 5: Meaning & Understanding
+   ══════════════════════════════════════ */
+function Ch5({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [responses, setResponses] = useState({});
+
+  const scenarios = [
+    { id: "rain", text: "비가 내리고 있다.", q: "이 문장을 읽고 어떤 느낌이 드나요?" },
+    { id: "wait", text: "긴 줄을 서서 기다리고 있다.", q: "이 상황은 '좋은' 건가요 '나쁜' 건가요?" },
+    { id: "alone", text: "혼자 카페에 앉아 있다.", q: "이 장면은 외로운 건가요, 자유로운 건가요?" },
+  ];
+
+  return (
+    <Screen title="탐구 5: 의미와 이해" ch={4} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>좌뇌는 모든 것에 <strong>의미를 붙이려는 강박</strong>이 있습니다. 같은 상황에도 사람마다 다른 의미를 부여하죠. 직접 확인해 봅시다.</p>
+          <Btn onClick={() => setStep(1)}>시작하기</Btn>
+        </FadeIn>
+      )}
+      {step >= 1 && step <= 3 && (
+        <FadeIn key={step}>
+          <div style={{ ...S.displayBox, padding: "28px 20px" }}>
+            <p style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0, lineHeight: 1.5 }}>{scenarios[step - 1].text}</p>
+          </div>
+          <p style={{ ...S.body, marginTop: 16 }}>{scenarios[step - 1].q}</p>
+          <div style={S.grid2}>
+            {(step === 1 ? ["좋다 / 설렌다", "싫다 / 우울하다"] : step === 2 ? ["짜증난다", "여유롭다"] : ["외롭다", "자유롭다"]).map((opt, i) => (
+              <button key={i} style={{ ...S.choiceBtn, background: i === 0 ? "#ff6b6b" : "#2ed573" }} onClick={() => {
+                setResponses({ ...responses, [scenarios[step - 1].id]: opt });
+                setStep(step + 1);
+              }}>{opt}</button>
+            ))}
+          </div>
+        </FadeIn>
+      )}
+      {step === 4 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p><strong>같은 문장, 다른 해석!</strong></p>
+            <p>"비가 온다"는 그 자체로 좋지도 나쁘지도 않습니다. "줄을 서서 기다린다"도 마찬가지예요. 하지만 좌뇌는 자동으로 <strong>"좋다/나쁘다"</strong>를 판단합니다.</p>
+            <p>여러분의 답변:</p>
+            {Object.entries(responses).map(([k, v]) => (
+              <p key={k} style={{ color: "#ffa502" }}>→ {v}</p>
+            ))}
+            <p>독서모임 멤버들과 답을 비교해 보세요. 같은 상황에 다른 의미를 부여한다는 걸 확인할 수 있을 거예요.</p>
+            <p>저자는 이 <strong>의미 과잉 생산</strong>이 정신적 고통의 주요 원인이라고 말합니다. 있는 그대로를 관찰하는 <strong>우뇌적 시선</strong>을 회복하면 고통이 줄어든다고요.</p>
+          </div>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 6: Intuition & Emotions
+   ══════════════════════════════════════ */
+function Ch6({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [gratitude, setGratitude] = useState(["", "", ""]);
+
+  return (
+    <Screen title="탐구 6: 직관, 감정, 감사" ch={5} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>우뇌는 직관, 감정, 창의성의 원천입니다. 두 가지 체험을 해봅시다.</p>
+          <Btn onClick={() => setStep(1)}>감정 관찰하기</Btn>
+          <div style={{ height: 12 }} />
+          <Btn onClick={() => setStep(3)} variant="secondary">감사 연습하기</Btn>
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <p style={S.body}>지금 이 순간, 자신의 <strong>몸 상태</strong>를 관찰해 보세요.</p>
+          <p style={{ ...S.body, color: "#aaa" }}>어깨에 힘이 들어가 있나요? 이마가 찌푸려져 있나요? 배가 불편한가요? 호흡이 얕나요?</p>
+          <p style={S.body}>10초간 눈을 감고 몸의 감각에 집중해 보세요.</p>
+          <Btn onClick={() => setStep(2)}>관찰했어요</Btn>
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p><strong>감정을 '관찰'하셨나요?</strong></p>
+            <p>보통 우리는 감정을 <strong>느끼는 동시에 그 감정에 빠져듭니다</strong>. 하지만 한 발 물러서서 "아, 지금 어깨에 긴장이 있구나"라고 알아차리면 — 그 순간 감정과 '나' 사이에 공간이 생깁니다.</p>
+            <p>저자는 이 <strong>"관찰하는 의식"</strong>이 우뇌의 작용이라고 말합니다. 감정을 느끼되 감정에 휘둘리지 않는 것, 이것이 감성 지능(EQ)의 핵심이에요.</p>
+          </div>
+          <Btn onClick={() => setStep(0)}>돌아가기</Btn>
+        </FadeIn>
+      )}
+      {step === 3 && (
+        <FadeIn>
+          <p style={S.body}>지금 <strong>감사한 것</strong> 3가지를 적어보세요. 아무리 작은 것이라도 좋아요.</p>
+          {gratitude.map((g, i) => (
+            <div key={i} style={{ ...S.inputRow, marginBottom: 8 }}>
+              <span style={{ color: "#e84393", fontWeight: 700, marginRight: 8 }}>{i + 1}.</span>
+              <input style={S.input} value={g} placeholder={["오늘 마신 따뜻한 커피", "건강한 몸", "이 독서모임"][i]} onChange={(e) => { const n = [...gratitude]; n[i] = e.target.value; setGratitude(n); }} />
+            </div>
+          ))}
+          {gratitude.filter((g) => g.trim()).length >= 2 && <Btn onClick={() => setStep(4)}>결과 보기</Btn>}
+        </FadeIn>
+      )}
+      {step === 4 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p><strong>감사의 힘</strong></p>
+            <p>여러분의 감사 목록: {gratitude.filter((g) => g.trim()).map((g, i) => <span key={i} style={{ color: "#e84393" }}>{i > 0 ? ", " : ""}{g}</span>)}</p>
+            <p>감사는 <strong>우뇌 활동</strong>입니다. 좌뇌가 "부족한 것, 잘못된 것"에 집중하는 반면, 감사는 "지금 있는 것"에 주의를 돌립니다.</p>
+            <p>연구에 따르면 감사 연습을 꾸준히 하면 좌뇌의 불평 회로가 약해지고, 행복감과 연결된 뇌 영역이 활성화됩니다.</p>
+          </div>
+          <Btn onClick={() => setStep(0)}>돌아가기</Btn>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 7: Consciousness
+   ══════════════════════════════════════ */
+function Ch7({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [seconds, setSeconds] = useState(30);
+  const timerRef = useRef(null);
+
+  const start = () => {
+    setStep(1);
+    setSeconds(30);
+    timerRef.current = setInterval(() => setSeconds((s) => { if (s <= 1) { clearInterval(timerRef.current); setStep(2); return 0; } return s - 1; }), 1000);
+  };
+
+  useEffect(() => () => clearInterval(timerRef.current), []);
+
+  return (
+    <Screen title="탐구 7: 의식이란 무엇인가?" ch={6} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>의식의 본질을 탐구하는 실험입니다.</p>
+          <p style={S.body}>30초간 <strong>"생각을 지켜보는 나"</strong>를 관찰해 봅시다. 생각의 내용이 아니라, <strong>생각이 떠오르고 사라지는 과정 자체</strong>를 지켜보세요.</p>
+          <p style={{ ...S.body, color: "#aaa", fontSize: "0.85rem" }}>TV 화면에 나오는 내용이 아니라, TV 화면(스크린) 자체를 보는 것과 같습니다.</p>
+          <Btn onClick={start}>시작하기 (30초)</Btn>
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 100, height: 100, borderRadius: "50%", border: "3px solid #a55eea", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 40px rgba(165,94,234,0.2)" }}>
+              <span style={{ fontSize: "2rem", fontWeight: 900, color: "#a55eea" }}>{seconds}</span>
+            </div>
+            <p style={{ color: "#a55eea", marginTop: 24, fontWeight: 600 }}>생각이 지나가는 것을 지켜보세요</p>
+            <p style={{ color: "#555", fontSize: "0.85rem" }}>생각은 구름이고, 당신은 하늘입니다</p>
+          </div>
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p><strong>생각을 지켜보는 '그것'은 무엇일까요?</strong></p>
+            <p>생각이 떠올랐다 사라지는 걸 관찰할 수 있었다면, 한 가지 중요한 사실을 발견한 겁니다:</p>
+            <p style={{ color: "#a55eea", fontWeight: 700, fontSize: "1.1rem" }}>"나는 생각 그 자체가 아니라, 생각을 지켜보는 인식(awareness)이다."</p>
+            <p>저자는 좌뇌가 TV 화면의 내용(생각, 감정, 판단)에 집중하는 반면, 우뇌는 <strong>화면 자체(의식, 인식)</strong>를 경험할 수 있다고 말합니다.</p>
+            <p>이 "지켜보는 의식"은 판단하지 않고, 고통받지 않고, 죽음을 두려워하지 않습니다. 그냥 <strong>존재</strong>합니다.</p>
+          </div>
+          <Btn onClick={() => setStep(0)}>다시 해보기</Btn>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   CHAPTER 8: Finding the Real You
+   ══════════════════════════════════════ */
+function Ch8({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [labels, setLabels] = useState(Array(8).fill(""));
+  const [crossed, setCrossed] = useState([]);
+
+  const placeholders = ["직장인 / 학생", "엄마 / 아빠 / 자녀", "내향적 / 외향적", "한국인", "독서가", "걱정이 많은 사람", "30대 / 40대", "누군가의 친구"];
+  const filled = labels.filter((l) => l.trim());
+
+  return (
+    <Screen title="탐구 8: 진짜 나를 찾아서" ch={7} onBack={onBack}>
+      {step === 0 && (
+        <FadeIn>
+          <p style={S.body}>"나는 ____이다"를 8개 적어보세요. 직업, 성격, 역할, 나이 등 뭐든 좋아요.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {labels.map((l, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ color: "#fd9644", fontWeight: 700, fontSize: "0.8rem", width: 36 }}>나는</span>
+                <input style={{ ...S.input, flex: 1 }} value={l} placeholder={placeholders[i]} onChange={(e) => { const n = [...labels]; n[i] = e.target.value; setLabels(n); }} />
+                <span style={{ color: "#fd9644", fontWeight: 700, fontSize: "0.8rem" }}>이다</span>
+              </div>
+            ))}
+          </div>
+          {filled.length >= 4 && <Btn onClick={() => setStep(1)} style={{ marginTop: 16 }}>다 적었어요</Btn>}
+        </FadeIn>
+      )}
+      {step === 1 && (
+        <FadeIn>
+          <p style={S.body}>이제 하나씩 탭해서 지워보세요.<br /><em style={{ color: "#aaa" }}>"이걸 빼면 나는 사라질까?"</em></p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filled.map((l, i) => (
+              <button key={i} style={{ ...S.labelCard, opacity: crossed.includes(i) ? 0.3 : 1, textDecoration: crossed.includes(i) ? "line-through" : "none" }} onClick={() => !crossed.includes(i) && setCrossed([...crossed, i])}>
+                나는 {l}이다 {crossed.includes(i) && <span style={{ position: "absolute", right: 14, color: "#ff4757", fontWeight: 900 }}>✕</span>}
+              </button>
+            ))}
+          </div>
+          {crossed.length >= filled.length - 1 && <Btn onClick={() => setStep(2)} style={{ marginTop: 16 }}>결과 보기</Btn>}
+        </FadeIn>
+      )}
+      {step === 2 && (
+        <FadeIn>
+          <div style={S.insightBox}>
+            <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "#fd9644", textAlign: "center" }}>모든 꼬리표를 지워도<br />'나'라는 느낌은 남아 있지 않나요?</p>
+            <p>직업, 성격, 나이, 역할... 이것들은 좌뇌가 붙인 <strong>꼬리표</strong>일 뿐입니다.</p>
+            <p>저자는 세 가지 길을 제시합니다:</p>
+            <p>① 좌뇌 세계에 완전히 빠져 사는 길<br />② 명상과 마음챙김으로 우뇌를 깨우는 길<br />③ <strong style={{ color: "#2ed573" }}>양쪽의 균형을 맞추는 중도의 길</strong></p>
+            <p>저자는 세 번째 길을 추천합니다. 좌뇌의 해석기를 끄는 것이 아니라, <strong>그것이 만들어낸 이야기임을 알아차리는 것</strong>. 그것만으로도 삶이 달라집니다.</p>
+          </div>
+          <Btn onClick={() => { setStep(0); setLabels(Array(8).fill("")); setCrossed([]); }}>처음부터 다시</Btn>
+        </FadeIn>
+      )}
+    </Screen>
+  );
+}
+
+/* ══════════════════════════════════════
+   SHARED COMPONENTS
+   ══════════════════════════════════════ */
+function Screen({ title, ch, onBack, children, progress }) {
+  return (
+    <div style={S.screen}>
+      <div style={S.topBar}>
+        <button style={S.backBtn} onClick={onBack}>← 홈</button>
+        {progress != null && (
+          <div style={S.progressWrap}><div style={{ ...S.progressFill, width: `${progress * 100}%`, background: CHAPTERS[ch].color }} /></div>
+        )}
+      </div>
+      <div style={{ ...S.chBadge, background: CHAPTERS[ch].color + "22", color: CHAPTERS[ch].color, borderColor: CHAPTERS[ch].color + "44" }}>
+        {CHAPTERS[ch].icon} {CHAPTERS[ch].num}장
+      </div>
+      <h2 style={S.screenTitle}>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Btn({ children, onClick, variant, style: extra }) {
+  return (
+    <button style={{ ...(variant === "secondary" ? S.btnSec : S.btn), ...extra }} onClick={onClick}>{children}</button>
+  );
+}
+
+function FadeIn({ children }) {
+  return <div style={{ animation: "fadeSlide 0.4s ease" }}>{children}</div>;
+}
+
+/* ══════════════════════════════════════
+   MAIN APP
+   ══════════════════════════════════════ */
+function App() {
+  const [active, setActive] = useState(null);
+  const components = [Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7, Ch8];
+
+  if (active !== null) {
+    const Comp = components[active];
+    return (
+      <>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+        @keyframes fadeSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        * { box-sizing: border-box; margin: 0; }
+        `}</style>
+        <Comp onBack={() => setActive(null)} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+      @keyframes fadeSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+      * { box-sizing: border-box; margin: 0; }
+      `}</style>
+      <div style={S.home}>
+        <div style={S.hero}>
+          <p style={S.heroSub}>독서모임 체험</p>
+          <h1 style={S.heroTitle}>뇌는 어떻게<br />나를 조종하는가</h1>
+          <p style={S.heroDesc}>8개 챕터의 탐구(Explorations)를<br />직접 체험해 보세요</p>
+        </div>
+        <div style={S.chapterGrid}>
+          {CHAPTERS.map((ch, i) => {
+            const locked = ch.num > 2;
+            return (
+              <button key={i} style={{ ...S.chCard, animationDelay: `${i * 0.06}s`, borderColor: locked ? "#333" : ch.color + "33", opacity: locked ? 0.4 : 1, cursor: locked ? "default" : "pointer" }} onClick={() => !locked && setActive(i)} disabled={locked}>
+                <div style={{ ...S.chIcon, background: locked ? "#1a1a22" : ch.color + "18", color: locked ? "#555" : ch.color }}>{locked ? "\u{1F512}" : ch.icon}</div>
+                <div style={S.chInfo}>
+                  <span style={{ ...S.chNum, color: locked ? "#555" : ch.color }}>{ch.num}장</span>
+                  <span style={{ ...S.chTitle, color: locked ? "#555" : undefined }}>{ch.title}</span>
+                  <span style={S.chDesc}>{locked ? "준비 중" : ch.desc}</span>
+                </div>
+                {!locked && <span style={{ ...S.chArrow, color: ch.color }}>→</span>}
+              </button>
+            );
+          })}
+        </div>
+        <p style={S.footer}>크리스 나이바우어 저 | No Self, No Problem</p>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════
+   STYLES
+   ══════════════════════════════════════ */
+const S = {
+  home: { minHeight: "100vh", background: "#08080c", color: "#e8e4dc", fontFamily: "'Noto Sans KR', sans-serif", padding: "0 0 40px" },
+  hero: { textAlign: "center", padding: "48px 20px 32px", background: "radial-gradient(ellipse at 50% 0%, #1a1520 0%, #08080c 70%)" },
+  heroSub: { fontSize: "0.75rem", letterSpacing: 3, color: "#888", textTransform: "uppercase", marginBottom: 12 },
+  heroTitle: { fontSize: "2rem", fontWeight: 900, lineHeight: 1.3, background: "linear-gradient(135deg, #e8e4dc, #ffa502)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  heroDesc: { fontSize: "0.85rem", color: "#777", marginTop: 12, lineHeight: 1.6 },
+  chapterGrid: { padding: "0 16px", display: "flex", flexDirection: "column", gap: 8 },
+  chCard: { display: "flex", alignItems: "center", gap: 14, background: "#111116", border: "1px solid", borderRadius: 14, padding: "14px 16px", cursor: "pointer", textAlign: "left", color: "#e8e4dc", animation: "fadeSlide 0.5s ease both", transition: "transform 0.15s" },
+  chIcon: { width: 48, height: 48, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", flexShrink: 0 },
+  chInfo: { flex: 1, display: "flex", flexDirection: "column", gap: 2 },
+  chNum: { fontSize: "0.65rem", fontWeight: 700, letterSpacing: 1 },
+  chTitle: { fontSize: "0.95rem", fontWeight: 700 },
+  chDesc: { fontSize: "0.72rem", color: "#888" },
+  chArrow: { fontSize: "1.1rem", fontWeight: 700 },
+  footer: { textAlign: "center", fontSize: "0.7rem", color: "#444", marginTop: 32 },
+
+  screen: { minHeight: "100vh", background: "#08080c", color: "#e8e4dc", fontFamily: "'Noto Sans KR', sans-serif", padding: "16px 20px 40px" },
+  topBar: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
+  backBtn: { background: "none", border: "none", color: "#888", fontSize: "0.85rem", cursor: "pointer", padding: "4px 0", flexShrink: 0 },
+  progressWrap: { flex: 1, height: 3, background: "#1a1a22", borderRadius: 2, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 2, transition: "width 0.3s" },
+  chBadge: { display: "inline-block", fontSize: "0.72rem", fontWeight: 700, padding: "3px 12px", borderRadius: 16, border: "1px solid", marginBottom: 8 },
+  screenTitle: { fontSize: "1.35rem", fontWeight: 900, marginBottom: 20, lineHeight: 1.3 },
+
+  body: { fontSize: "0.92rem", lineHeight: 1.75, color: "#bbb", marginBottom: 16 },
+  instruction: { textAlign: "center", fontSize: "0.9rem", color: "#ffa502", fontWeight: 700, marginBottom: 16, padding: "10px", background: "rgba(255,165,2,0.08)", borderRadius: 10 },
+  displayBox: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: 130, borderRadius: 16, background: "#111116", marginBottom: 20, transition: "all 0.2s" },
+
+  grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 },
+  colorBtn: { border: "none", borderRadius: 12, padding: "16px 8px", fontSize: "1.05rem", fontWeight: 800, color: "#fff", cursor: "pointer", textShadow: "0 1px 3px rgba(0,0,0,0.3)" },
+  choiceBtn: { border: "none", borderRadius: 12, padding: "16px 8px", fontSize: "0.95rem", fontWeight: 700, color: "#fff", cursor: "pointer" },
+
+  btn: { display: "block", width: "100%", background: "linear-gradient(135deg, #ffa502, #e67e22)", border: "none", color: "#fff", fontWeight: 700, fontSize: "1rem", padding: "14px", borderRadius: 12, cursor: "pointer", marginTop: 8 },
+  btnSec: { display: "block", width: "100%", background: "#151518", border: "1px solid #333", color: "#ccc", fontWeight: 600, fontSize: "0.95rem", padding: "14px", borderRadius: 12, cursor: "pointer", marginTop: 8 },
+
+  inputRow: { display: "flex", gap: 8, marginBottom: 8 },
+  input: { flex: 1, background: "#111116", border: "1px solid #282830", borderRadius: 10, padding: "10px 14px", color: "#e8e4dc", fontSize: "0.88rem", outline: "none", fontFamily: "'Noto Sans KR', sans-serif" },
+  addBtn: { background: "#ffa502", border: "none", color: "#fff", width: 42, borderRadius: 10, fontSize: "1.3rem", fontWeight: 700, cursor: "pointer" },
+
+  chipWrap: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 },
+  chip: { background: "#1a1a22", border: "1px solid #333", borderRadius: 20, padding: "5px 14px", fontSize: "0.8rem", color: "#ddd" },
+
+  insightBox: { background: "#111116", border: "1px solid #222", borderRadius: 16, padding: "20px 18px", fontSize: "0.88rem", lineHeight: 1.75, color: "#bbb", marginBottom: 20 },
+
+  timerCircle: { width: 140, height: 140, borderRadius: "50%", border: "3px solid #ffa502", display: "flex", justifyContent: "center", alignItems: "center", margin: "20px auto", boxShadow: "0 0 50px rgba(255,165,2,0.15)" },
+  timerNum: { fontSize: "3.5rem", fontWeight: 900, color: "#ffa502" },
+
+  breathCircle: { width: 180, height: 180, borderRadius: "50%", border: "3px solid", display: "flex", justifyContent: "center", alignItems: "center", margin: "20px auto", transition: "all 4s ease-in-out" },
+
+  labelCard: { display: "block", width: "100%", background: "#111116", border: "1px solid #282830", borderRadius: 12, padding: "14px 16px", color: "#e8e4dc", fontSize: "0.92rem", fontWeight: 600, cursor: "pointer", textAlign: "left", position: "relative", transition: "all 0.3s" },
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
